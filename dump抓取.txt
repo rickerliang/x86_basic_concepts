@@ -1,0 +1,36 @@
+注意区分进程位数，32位进程需要用32位调试器抓dump
+full dump与mini dump的区别，mini dump没有堆数据，应尽量使用full dump
+
+1.任务管理器，64位系统下的32位任务管理器在这个目录，任务管理器抓的是full dump
+%SystemRoot%\SysWoW64\
+
+2.windbg
+用windbg加载程序，当程序产生异常后，windbg捕捉，暂停执行，用命令
+.dump /f 文件名
+或者
+.dump /ma 文件名
+抓取full dump
+
+3.bsod dump
+http://blogs.msdn.com/b/wer/archive/2009/02/09/kernel-dump-storage-and-clean-up-behavior-in-windows-7.aspx
+选择full dump
+First report the kernel fault to the Online Crash Analysis Service.
+Then, if machine has a registry setting AlwaysKeepMemoryDump set to 1, store the dump file on disk.
+Else, if machine is a Windows Server SKU, store the dump file on disk.
+Else, if the machine is joined to a domain (i.e. this is a corporate machine), store the dump file on disk.
+Else, if machine is not on a domain (i.e. this is a home user’s machine),
+If free disk space is >= 25GB, store the dump file on disk.
+Else (free disk space is < 25 GB), delete the dump file.
+
+4.什么都没有，如果是windows xp，可以用dr watson
+windows vista之后，Windows Error Report
+http://blogs.technet.com/b/yongrhee/archive/2010/12/29/drwtsn32-on-windows-vista-windows-server-2008-windows-7-windows-server-2008-r2.aspx
+
+5.Forcing a System Crash from the Keyboard
+https://msdn.microsoft.com/en-us/library/windows/hardware/ff545499%28v=vs.85%29.aspx
+
+6.jit
+https://msdn.microsoft.com/en-us/library/5hs4b7a6.aspx
+
+7.Image File Execution Option
+https://msdn.microsoft.com/en-us/library/a329t4ed(VS.71).aspx

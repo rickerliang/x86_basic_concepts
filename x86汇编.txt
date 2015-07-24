@@ -1,0 +1,65 @@
+1.call 指令
+
+call指令等于
+push eip
+jmp dest
+
+ret xxh指令等于
+pop eip
+sub esp, xxh	// 如果xx 16位立即数存在
+
+2.函数栈
+
+push ebp
+mov ebp, esp // 建立函数栈基址
+sub esp, xxh // 分配空间
+这段代码叫做prologue，对应enter指令
+
+
+esp	local_var...
+ebp	outer_ebp
+	ret_addr
+	func_arg1
+	func_arg2
+	func_argn...
+
+mov esp,ebp  
+pop ebp // 回复外层函数ebp
+ret (xxh) // xxh立即数可选，一般情况下stdcall才会有xxh，因为stdcall函数自己管理参数出栈，也决定了stdcall无法接收变长参数，否则会导致esp在函数调用前后不平衡
+这段代码叫epilogue，对应leave指令
+
+注意，编译器优化FPO-frame pointer optimization-omit frame pointer不生成prologue和epilogue，使ebp作为通用寄存器
+
+3.虚函数call
+
+普通call opcode一般是
+E8 16位立即数
+或者
+E8 32立即数
+立即数是相对call下一条指令的偏移，例如
+771A96B9 E8 C3 00 00 00       call        CBinding::StartBinding (771A9781h)  
+771A96BE 8B 4D EC             mov         ecx,dword ptr [ebp-14h]
+这是32为立即数C3，相对771A96BE，及771A96BE + C3 = 771A9781
+
+基于虚表原理，虚函数call需要用到寄存器间接寻址，opcode是
+FF reg 立即数
+寄存器是虚表表头，立即数是虚函数偏移
+例如
+771AD1CD 8B 03                mov         eax,dword ptr [ebx]	// 取虚表地址
+771AD1CF 8B CB                mov         ecx,ebx  				// this保存到ecx内，准备发起thiscall
+771AD1D1 FF 50 3C             call        dword ptr [eax+3Ch]   // 计算虚函数偏移，取函数地址，发起thiscall
+
+-> vtlb   ->vfunction1
+         |
+          ->vfunction2
+	 |
+          ->vfunction3
+   member1
+   member2
+
+4.特权指令，非法的指令前缀组合
+识别这些指令，有助于判断当前程序是否在正确的代码段执行
+in、out指令是硬件端口操作指令，不能在user mode下被执行
+lock前缀指令只能与某些特定指令结合，以下这种结合是非法 lock pop reg
+
+5.intel x86指令集手册
